@@ -33,11 +33,48 @@ class VEvent {
     return $ret;
   }
 
+  /**
+   * Assumed string date as written in iCalendar, with the ISO 8601 format, and
+   * perhaps some small variations.
+   */
+  private $date_format = 'Ymd\THis';
+  function to_date($string) {
+    $date_format = 'Ymd\THis';
+
+    $timezone = null;
+    $date = null;
+
+    $parts = explode(':', $string);
+    if (sizeof($parts) == 2) {
+      $timezone = $parts[0];
+      $date = $parts[1];
+    } else {
+      $aux = $this->icalendar->GetComponents('VTIMEZONE');
+      if (!empty($aux)) {
+        $aux = $aux[0]->GetProperties('TZID');
+        if (!empty($aux)) {
+          $timezone = $aux[0];
+        }
+      }
+      if (!$timezone)
+        $timezone = 'UTC';
+
+      $date = $string;
+    }
+
+    $timezone = new DateTimeZone($timezone);
+    if ($date[strlen($date)-1] == 'Z') {
+      $date = substr($date, 0, strlen($date)-1);
+    }
+
+    return DateTime::createFromFormat($date_format, $date, $timezone);
+  }
+
   function summary() { return $this->get_property('SUMMARY'); }
   function description() { return $this->get_property('DESCRIPTION'); }
   function location() { return $this->get_property('LOCATION'); }
-  function start() { return $this->get_property('DTSTART'); }
-  function end() { return $this->get_property('DTEND'); }
+  function start() { return to_date($this->get_property('DTSTART')); }
+  function end() { return to_date($this->get_property('DTEND')); }
   function attendees() { return $this->get_properties('ATTENDEE'); }
 
   function attendeesOnlyValidEmails() {
@@ -75,10 +112,10 @@ function connect($params) {
 }
 
 function check_changes($olds, $news) {
-  $same_events=array();
-  $modified_events=array();
-  $new_events=array();
-  $deleted_events=array();
+  $same_events = array();
+  $modified_events = array();
+  $new_events = array();
+  $deleted_events = array();
 
   foreach ($news as $new_key => $new) {
     $got = @ $olds[$new_key];
