@@ -71,8 +71,6 @@ function connect($params) {
     $updated_events[$item['href']] = array('etag' => $item['etag'], 'data' => $icalendar_text);
   }
 
-  //check_changes($previous_events, $updated_events);
-
   return $updated_events;
 }
 
@@ -100,8 +98,9 @@ function check_changes($olds, $news) {
       $deleted_events[$old_key] = $old;
   }
 
-  /* echo "Same: "; print_r($same_events); */
-  /* echo "Modified: "; print_r($modified_events); */
-  /* echo "New: "; print_r($new_events); */
-  /* echo "Deleted: "; print_r($deleted_events); */
+  return array(
+               'same' => $same_events,
+               'modified' => $modified_events,
+               'new' => $new_events,
+               'deleted' => $deleted_events);
 }
