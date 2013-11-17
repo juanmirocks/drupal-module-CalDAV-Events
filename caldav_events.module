@@ -46,7 +46,7 @@ function caldav_events_block_info() {
   if ($event_name) {
     $blocks['caldav_events_named_events'] =
       array(
-            'info' => t('List of events: '.$event_name), //block friendly name
+            'info' => t('List of events: '.check_plain($event_name)), //block friendly name
             'cache' => DRUPAL_CACHE_PER_ROLE,
             );
     return $blocks;
@@ -67,7 +67,13 @@ function caldav_events_block_view($delta = '') {
           $items = array();
           foreach ($events as $e) {
             $event = new VEvent($e['data']);
-            $items[] = $event->summary();
+            $items[] = theme(_().'theme_named_events',
+                             array('summary' => $event->summary(),
+                                   'description' => $even->description(),
+                                   'location' => $event->location(),
+                                   'start_date' => $event->start(),
+                                   'end_date' => $event->end(),
+                                   'attendees' => $event->attendees()));
           }
 
           $block['content'] = theme('item_list', array('items' => $items));
@@ -76,6 +82,14 @@ function caldav_events_block_view($delta = '') {
       return $block;
     }
   }
+}
+
+function caldav_events_theme() {
+  return array(
+    'caldav_events_theme_named_events' =>
+    array('variables' => array('summary' => '', 'description' => '', 'location' => '', 'start_date' => NULL, 'end_date' => NULL, 'attendees' => ''),
+    ),
+  );
 }
 
 function caldav_events_menu() {
@@ -160,11 +174,15 @@ function caldav_events_form_validate($form, &$form_state) {
   if ($v[_().'server_url'] && $v[_().'server_username'] && $v[_().'server_password'] && $v[_().'event_name'] && $v[_().'event_start'] && $v[_().'event_end']) {
     variable_set(_().'server_data_given', true);
   } else {
+    variable_set(_().'server_data_given', false);
     //form_set_error('caldav_events_name', t('...'));
   }
 }
 
 function _caldav_events_create_new_node($title, $body = "") {
+  $title = check_plain($title);
+  $body = check_plain($body);
+
   $node = new stdClass();
   $node->type = 'page';
   $node->language = variable_get('language_default', 'und');
@@ -193,25 +211,39 @@ function caldav_events_cron_queue_info() {
 
 function _caldav_events_read_servers($item) {
   if (variable_get(_().'server_data_given', false)) {
+    $event_name = variable_get(_().'event_name');
+
     $params =
       array (
              'url' => variable_get(_().'server_url'),
              'username' => variable_get(_().'server_username'),
              'password' => variable_get(_().'server_password'),
-             'event_name' => variable_get(_().'event_name'),
+             'event_name' => $event_name,
              'event_start' => variable_get(_().'event_start'),
              'event_end' => variable_get(_().'event_end')
              );
 
-    $events = connect($params);
-    _caldav_events_set_stored_events($params['event_name'], $events);
+    $previous_events = _caldav_events_get_stored_events($event_name);
+    $updated_events = connect($params);
+    _caldav_events_set_stored_events($event_name, $updated_events);
 
-    watchdog('caldav_events', '# events: '.sizeof($events));
+    $meta_events = check_changes($previous_events, $updated_events);
+
+    $doer = function($type, $extraMsg = '') use ($meta_events) {
+      foreach ($meta_events[$type] as $e) {
+        $event = new VEvent($e['data']);
+        _caldav_events_create_new_node($extraMsg.$event->summary(), $event->description());
+      }
+    };
+
+    $doer('new');
+    $doer('modified', '(UPDATED) ');
+    $doer('deleted', '(CANCELLED) ');
   }
 }
 
 function _caldav_events_events_local_path($event_name) {
-  return drupal_get_path('module', 'caldav_events').'/data/'.$event_name.'.bin';
+  return drupal_get_path('module', 'caldav_events').'/data/'.check_plain($event_name).'.bin';
 }
 
 function _caldav_events_set_stored_events($event_name, $events) {
@@ -220,7 +252,7 @@ function _caldav_events_set_stored_events($event_name, $events) {
 
 function _caldav_events_get_stored_events($event_name) {
   $file = _caldav_events_events_local_path($event_name);
-  if ($file) {
+  if (file_exists($file)) {
     return unserialize(file_get_contents($file));
   } else {
     return array();
