@@ -67,7 +67,7 @@ function caldav_events_block_view($delta = '') {
           $items = array();
           foreach ($events as $e) {
             $event = new VEvent($e['data']);
-            $items[] = theme(_().'theme_named_events',
+            $items[] = theme(array('caldav_events_named_events__'),
                              array('summary' => $event->summary(),
                                    'description' => $event->description(),
                                    'location' => $event->location(),
@@ -76,7 +76,7 @@ function caldav_events_block_view($delta = '') {
                                    'attendees' => $event->attendees()));
           }
 
-          $block['content'] = theme('item_list', array('items' => $items));
+          $block['content'] = theme(array('item_list'), array('items' => $items));
         }
       }
       return $block;
@@ -84,9 +84,13 @@ function caldav_events_block_view($delta = '') {
   }
 }
 
+function theme_caldav_events_named_events($variables) {
+  return '<strong>'.$variables['summary'].'</strong> '.$variables['description'];
+}
+
 function caldav_events_theme() {
   return array(
-    'caldav_events_theme_named_events' =>
+    'caldav_events_named_events__' =>
     array('variables' => array('summary' => '', 'description' => '', 'location' => '', 'start_date' => NULL, 'end_date' => NULL, 'attendees' => ''),
     ),
   );
