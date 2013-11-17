@@ -1,6 +1,14 @@
 <?php
 
-$devel=true;
+/**
+ * Return this's module name appended by an underscore.
+ *
+ * Use it to form module's keys in forms or variables.
+ *
+ */
+function _() {
+  return 'caldav_events_';
+}
 
 /**
  * CalDav Events, drupal module
@@ -8,7 +16,7 @@ $devel=true;
  * Naming Conventions:
  *   * Only lowercase and underscore
  *   * Drupral hooks are named `caldav_events_hookname`
- *   * Private functions are named `_caldav_events_functioname`
+ *   * Private functions are named `_caldav_events_functioname` (except for _())
  *   * Public functions (available to other modules) are named `caldav_events_api_functionname`
  *
  */
@@ -47,7 +55,7 @@ function caldav_events_block_view($delta = '') {
   case 'caldav_events_hello_world':
     $block['subject'] = t('Hello World');
     if (user_access('access content')) {
-      $block['content'] = '<p>' . t(_caldav_events_hello_world(variable_get('caldav_events_name', 'World'))) . '</p>';
+      $block['content'] = '<p>' . t(_caldav_events_hello_world(variable_get('caldav_events_username', 'World'))) . '</p>';
     }
     return $block;
   }
@@ -72,24 +80,75 @@ function caldav_events_menu() {
 }
 
 function caldav_events_form($form, &$form_state) {
-  $form['caldav_events_name'] =
+  $form =
     array(
-          '#type' => 'textfield',
-          '#title' => t('World name'),
-          '#default_value' => variable_get('caldav_events_name', 'World'),
-          '#size' => 16,
-          '#maxlength' => 32,
-          '#description' => t('Your name in "Hello World!"'),
-          '#required' => FALSE,
+          _().'server_url' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('CalDAV Server URL'),
+                '#default_value' => variable_get(_().'server_url'),
+                '#size' => 80,
+                '#description' => t('CalDAV server to connect to'),
+                '#required' => true),
+
+          _().'server_username' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Username'),
+                '#default_value' => variable_get(_().'server_username'),
+                '#size' => 32,
+                '#description' => t('Username to connect to the CalDAV server'),
+                '#required' => true),
+
+          _().'server_password' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Password'),
+                //'#default_value' => variable_get(_().'server_password'), //do
+                //not show the password for now
+                '#size' => 32,
+                '#description' => t('Password to connec to the CalDAV server'),
+                '#required' => true),
+
+          _().'event_name' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Event Name'),
+                '#default_value' => variable_get(_().'event_name'),
+                '#size' => 32,
+                '#description' => t('Search in calendar events containing the given name'),
+                '#required' => true),
+
+          _().'event_start' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Start'),
+                '#default_value' => variable_get(_().'event_start'),
+                '#size' => 16,
+                '#description' => t('Search in calendar events starting from this time'),
+                '#required' => true),
+
+          _().'event_end' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('End'),
+                '#default_value' => variable_get(_().'event_end'),
+                '#size' => 16,
+                '#description' => t('Search in calendar events until this time'),
+                '#required' => true),
           );
+
   return system_settings_form($form);
 }
 
 function caldav_events_form_validate($form, &$form_state) {
-  /* $name = $form_state['values']['caldav_events_name'];  */
-  /* if (strlen($name) <= 2) { */
-  /*   form_set_error('caldav_events_name', t('The name must be greater than 2')); */
-  /* } */
+  $v = $form_state['values'];
+
+  if ($v[_().'server_url'] && $v[_().'server_username'] && $v[_().'server_password'] && $v[_().'event_name'] && $v[_().'event_start'] && $v[_().'event_end']) {
+    variable_set(_().'server_data_given', true);
+  } else {
+    //form_set_error('caldav_events_name', t('...'));
+  }
 }
 
 function _caldav_events_create_new_node($title, $body = "") {
@@ -120,7 +179,20 @@ function caldav_events_cron_queue_info() {
 }
 
 function _caldav_events_read_servers($item) {
-  $events = _caldav_events_connect();
+  if (variable_get(_().'server_data_given', false)) {
+    $params =
+      array (
+             'url' => variable_get(_().'server_url'),
+             'username' => variable_get(_().'server_username'),
+             'password' => variable_get(_().'server_password'),
+             'event_name' => variable_get(_().'event_name'),
+             'event_start' => variable_get(_().'event_start'),
+             'event_end' => variable_get(_().'event_end')
+             );
+
+    $events = connect($params);
+    watchdog('caldav_events', '# events: '.sizeof($events));
+  }
 }
 
 /* ?> Omitted closing tag, as recommended by: https://drupal.org/node/1074362 */
