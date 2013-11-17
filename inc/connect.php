@@ -53,14 +53,14 @@ class VEvent {
 }
 
 function connect($params) {
-  $client = new CalDAVClient($params['server_url'], $params['username'], $params['password']);
+  $client = new CalDAVClient($params['url'], $params['username'], $params['password']);
 
-  $start=$params['start'];
-  $end=$params['end'];
-  $event_prefix=$params['event_prefix'];
+  $event_name=$params['event_name'];
+  $start=$params['event_start'];
+  $end=$params['event_end'];
 
   $range_filter = "<C:time-range start=\"$start\" end=\"$end\"/>";
-  $summary_filter = "<C:text-match>$event_prefix</C:text-match>";
+  $summary_filter = "<C:text-match>$event_name</C:text-match>";
   $filter = "<C:filter><C:comp-filter name=\"VCALENDAR\"><C:comp-filter name=\"VEVENT\">$range_filter<C:prop-filter name=\"SUMMARY\">$summary_filter</C:prop-filter></C:comp-filter></C:comp-filter></C:filter>";
 
   $results = $client->DoCalendarQuery($filter);
