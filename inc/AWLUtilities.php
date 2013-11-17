@@ -364,7 +364,9 @@ if ( !function_exists("uuid") ) {
 }
 
 if ( !function_exists("translate") ) {
-  require("Translation.php");
+  function translate($text) {
+    t($text);
+  }
 }
 
  if ( !function_exists("clone") && version_compare(phpversion(), '5.0') < 0) {
