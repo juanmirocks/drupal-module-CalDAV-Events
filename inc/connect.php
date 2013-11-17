@@ -13,7 +13,6 @@ class VEvent {
     $aux = $this->icalendar->GetComponents('VEVENT');
     assert(sizeof($aux) == 1, "I expect only one VEVENT for this iCalendar");
     $this->vevent = $aux[0];
-    //print_r($this->vevent);
   }
 
   function get_property($name) {
@@ -37,44 +36,37 @@ class VEvent {
    * Assumed string date as written in iCalendar, with the ISO 8601 format, and
    * perhaps some small variations.
    */
-  private $date_format = 'Ymd\THis';
-  function to_date($string) {
-    $date_format = 'Ymd\THis';
-
-    $timezone = null;
-    $date = null;
-
-    $parts = explode(':', $string);
-    if (sizeof($parts) == 2) {
-      $timezone = $parts[0];
-      $date = $parts[1];
-    } else {
-      $aux = $this->icalendar->GetComponents('VTIMEZONE');
-      if (!empty($aux)) {
-        $aux = $aux[0]->GetProperties('TZID');
-        if (!empty($aux)) {
-          $timezone = $aux[0];
-        }
-      }
-      if (!$timezone)
-        $timezone = 'UTC';
-
-      $date = $string;
-    }
-
-    $timezone = new DateTimeZone($timezone);
+  private static $date_format = 'Ymd\THis';
+  private function to_date($string) {
+    $date = $string;
     if ($date[strlen($date)-1] == 'Z') {
       $date = substr($date, 0, strlen($date)-1);
     }
 
-    return DateTime::createFromFormat($date_format, $date, $timezone);
+    //TODO, the timezone could be in the DT arrays
+    $timezone = null;
+
+    $aux = $this->icalendar->GetComponents('VTIMEZONE');
+    if (!empty($aux)) {
+      $aux = $aux[0]->GetProperties('TZID');
+      if (!empty($aux)) {
+        $timezone = $aux[0]->content;
+      }
+    }
+    if (!$timezone) {
+      $timezone = 'UTC';
+    }
+
+    $timezone = new DateTimeZone($timezone);
+
+    return DateTime::createFromFormat(self::$date_format, $date, $timezone);
   }
 
   function summary() { return $this->get_property('SUMMARY'); }
   function description() { return $this->get_property('DESCRIPTION'); }
   function location() { return $this->get_property('LOCATION'); }
-  function start() { return to_date($this->get_property('DTSTART')); }
-  function end() { return to_date($this->get_property('DTEND')); }
+  function start() { return $this->to_date($this->get_property('DTSTART')); }
+  function end() { return $this->to_date($this->get_property('DTEND')); }
   function attendees() { return $this->get_properties('ATTENDEE'); }
 
   function attendeesOnlyValidEmails() {
