@@ -1,0 +1,126 @@
+<?php
+
+$devel=true;
+
+/**
+ * CalDav Events, drupal module
+ *
+ * Naming Conventions:
+ *   * Only lowercase and underscore
+ *   * Drupral hooks are named `caldav_events_hookname`
+ *   * Private functions are named `_caldav_events_functioname`
+ *   * Public functions (available to other modules) are named `caldav_events_api_functionname`
+ *
+ */
+
+module_load_include('php', 'caldav_events', 'inc/connect');
+
+/**
+ * Implements hook_help.
+ *
+ * Displays help and module information.
+ *
+ * @param path
+ *   Which path of the site we're using to display help
+ * @param arg
+ *   Array that holds the current path as returned from arg() function
+ */
+function caldav_events_help($path, $arg) {
+  switch ($path) {
+  case "admin/help#caldav_events":
+    return '<p>' . t("Write an email (with proper subject) to: juanmi@jmcejuela.com") . '</p>';
+    break;
+  }
+}
+
+function caldav_events_block_info() {
+  $blocks['caldav_events_hello_world'] =
+    array(
+          'info' => t('Hello World'), //block name
+          'cache' => DRUPAL_CACHE_PER_ROLE,
+          );
+  return $blocks;
+}
+
+function caldav_events_block_view($delta = '') {
+  switch ($delta) {
+  case 'caldav_events_hello_world':
+    $block['subject'] = t('Hello World');
+    if (user_access('access content')) {
+      $block['content'] = '<p>' . t(_caldav_events_hello_world(variable_get('caldav_events_name', 'World'))) . '</p>';
+    }
+    return $block;
+  }
+}
+
+function _caldav_events_hello_world($name = "World") {
+  return "Hello $name!\n";
+}
+
+function caldav_events_menu() {
+  $items = array();
+  $items['admin/config/content/caldav_events'] =
+    array(
+          'title' => 'CalDav Events',
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('caldav_events_form'),
+          'access arguments' => array('access administration pages'),
+          'type' => MENU_NORMAL_ITEM,
+          );
+
+  return $items;
+}
+
+function caldav_events_form($form, &$form_state) {
+  $form['caldav_events_name'] =
+    array(
+          '#type' => 'textfield',
+          '#title' => t('World name'),
+          '#default_value' => variable_get('caldav_events_name', 'World'),
+          '#size' => 16,
+          '#maxlength' => 32,
+          '#description' => t('Your name in "Hello World!"'),
+          '#required' => FALSE,
+          );
+  return system_settings_form($form);
+}
+
+function caldav_events_form_validate($form, &$form_state) {
+  /* $name = $form_state['values']['caldav_events_name'];  */
+  /* if (strlen($name) <= 2) { */
+  /*   form_set_error('caldav_events_name', t('The name must be greater than 2')); */
+  /* } */
+}
+
+function _caldav_events_create_new_node($title, $body = "") {
+  $node = new stdClass();
+  $node->type = 'page';
+  $node->language = variable_get('language_default', 'und');
+  $node->title = $title;
+  //
+  $node->body[$node->language][0]['value']   = $body;
+  $node->body[$node->language][0]['summary'] = text_summary($body);
+
+  node_object_prepare($node);
+  node_save($node);
+}
+
+function caldav_events_cron() {
+  $queue = DrupalQueue::get('caldav_events_queue_1');
+  $queue->createItem("miau miau");
+}
+
+function caldav_events_cron_queue_info() {
+  $queues['caldav_events_queue_1'] =
+    array(
+          'worker callback' => '_caldav_events_read_servers',
+          'time' => 20, // Maximum allowed time to run, in seconds
+          );
+  return $queues;
+}
+
+function _caldav_events_read_servers($item) {
+  $events = _caldav_events_connect();
+}
+
+/* ?> Omitted closing tag, as recommended by: https://drupal.org/node/1074362 */

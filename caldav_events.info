@@ -1,0 +1,5 @@
+name = CalDAV Events
+description = CalDAV reader & writer to react upon events and manage calendar information
+core = 7.x
+
+configure = admin/config/content/caldav_events
