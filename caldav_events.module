@@ -216,7 +216,6 @@ function caldav_events_form_validate($form, &$form_state) {
 
 function _caldav_events_create_create_or_update_node_event($nid, $event_name, $type, $status, $event) {
   if ($nid) {
-    watchdog('caldav_events', '____*****____ '.$status.$nid);
     $node = node_load($nid);
   } else {
     $node->is_new = true;
