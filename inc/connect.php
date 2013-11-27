@@ -81,7 +81,7 @@ class VEvent {
   }
 }
 
-function connect($params) {
+function _read_events_from_server($params) {
   $client = new CalDAVClient($params['url'], $params['username'], $params['password']);
 
   $event_name=$params['event_name'];
@@ -97,13 +97,21 @@ function connect($params) {
   $updated_events = array();
   foreach ($results as $item) {
     $icalendar_text = $item['data'];
-    $updated_events[$item['href']] = array('etag' => $item['etag'], 'data' => $icalendar_text);
+    $updated_events[$item['href']] = array('etag' => $item['etag'], 'icalendar' => $icalendar_text);
   }
+
+  uasort($updated_events, '_sort_events');
 
   return $updated_events;
 }
 
-function check_changes($olds, $news) {
+function _sort_events($a, $b) {
+  $a = new VEvent($a['icalendar']);
+  $b = new VEvent($b['icalendar']);
+  return ($a->start() < $b->start());
+}
+
+function _check_changes($olds, $news) {
   $same_events = array();
   $modified_events = array();
   $new_events = array();
@@ -111,7 +119,12 @@ function check_changes($olds, $news) {
 
   foreach ($news as $new_key => $new) {
     $got = @ $olds[$new_key];
+
     if ($got) {
+      if (@ $got['keep']) {
+        $new['keep'] = $got['keep'];
+      }
+
       if ($got['etag'] == $new['etag'])
         $same_events[$new_key] = $new;
       else
