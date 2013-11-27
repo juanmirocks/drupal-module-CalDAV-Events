@@ -1,22 +1,12 @@
 <?php
 
 /**
- * Return this's module name appended by an underscore.
- *
- * Use it to form module's keys in forms or variables.
- *
- */
-function _() {
-  return 'caldav_events_';
-}
-
-/**
  * CalDav Events, drupal module
  *
  * Naming Conventions:
  *   * Only lowercase and underscore
  *   * Drupral hooks are named `caldav_events_hookname`
- *   * Private functions are prefixed with '_'
+ *   * Private functions are prefixed preferably with '_caldav_events' or just with '_' for utility functions
  *   * Public functions (available to other modules) are named `caldav_events_api_functionname`
  *
  */
@@ -88,7 +78,7 @@ function caldav_events_block_info() {
 }
 
 function caldav_events_block_view($delta = '') {
-  if (_caldav_events_startsWith($delta, 'list_')) {
+  if (_startsWith($delta, 'list_')) {
     $event_name = variable_get(_().'event_name');
     $block['subject'] = t($event_name.' events');
     if (user_access('access content')) {
@@ -96,22 +86,22 @@ function caldav_events_block_view($delta = '') {
       if (empty($events)) {
         $block['content'] = '<p>No events found</p>';
       } else {
-          $items = array();
-          foreach ($events as $e) {
-            $event = new VEvent($e['icalendar']);
-            $items[] =
-              theme(array("caldav_events_single__$event_name", 'caldav_events_single'),
-                    array('summary' => $event->summary(),
-                          'description' => $event->description(),
-                          'location' => $event->location(),
-                          'start_date' => $event->start(),
-                          'end_date' => $event->end(),
-                          'attendees' => $event->attendees()));
-          }
+        $items = array();
+        foreach ($events as $e) {
+          $event = new VEvent($e['icalendar']);
+          $items[] =
+            theme(array("caldav_events_single__$event_name", 'caldav_events_single'),
+                  array('summary' => $event->summary(),
+                        'description' => $event->description(),
+                        'location' => $event->location(),
+                        'start_date' => $event->start(),
+                        'end_date' => $event->end(),
+                        'attendees' => $event->attendees()));
+        }
 
-          $block['content'] =
-            theme(array("caldav_events_list__$event_name", 'caldav_events_list', 'item_list'),
-                  array('items' => $items));
+        $block['content'] =
+          theme(array("caldav_events_list__$event_name", 'caldav_events_list', 'item_list'),
+                array('items' => $items));
       }
     }
     return $block;
@@ -214,17 +204,26 @@ function caldav_events_form_validate($form, &$form_state) {
   }
 }
 
-function _caldav_events_create_create_or_update_node_event($nid, $event_name, $type, $status, $event) {
+function _caldav_events_create_or_update_event_node($nid, $event_name, $status, $event) {
   if ($nid) {
     $node = node_load($nid);
   } else {
-    $node->is_new = true;
     $node = new stdClass();
+    $node->is_new = true;
   }
 
-  $node->type = $type;
   $node->language = variable_get('language_default', 'und');
+  caldav_events_api_theme_event_node($event_name, $status, $event, $node);
+  if (! @ $node->type) {
+    $node->type = 'page';
+  }
 
+  node_object_prepare($node);
+  node_save($node);
+  return $node->nid;
+}
+
+function caldav_events_api_theme_event_node($event_name, $status, $event, &$node) {
   switch($status) {
   case 'new':
     $prefix_title = '';
@@ -244,10 +243,6 @@ function _caldav_events_create_create_or_update_node_event($nid, $event_name, $t
   //$node->body[$node->language][0]['format']  = 'php_code';
   //
   //$node->time[$node->language][0]['value']   = $event->start()->format('H:m');
-
-  node_object_prepare($node);
-  node_save($node);
-  return $node->nid;
 }
 
 function caldav_events_cron() {
@@ -288,7 +283,7 @@ function _caldav_events_read_servers($item) {
         $event = new VEvent($e['icalendar']);
         $existing_nid = @ $e['keep']['nid'];
 
-        $nid = _caldav_events_create_create_or_update_node_event($existing_nid, $event_name, 'page', $status, $event);
+        $nid = _caldav_events_create_or_update_event_node($existing_nid, $event_name, $status, $event);
         if ($nid && $status !== 'deleted') {
           $updated_events[$key]['keep']['nid'] = $nid;
         }
@@ -324,7 +319,17 @@ function _caldav_events_get_stored_events($event_name) {
 // Utilities
 //-------------------------------------------------------------------------
 
-function _caldav_events_startsWith($haystack, $needle){
+/**
+ * Return this's module name appended by an underscore.
+ *
+ * Use it to form module's keys in forms or variables.
+ *
+ */
+function _() {
+  return 'caldav_events_';
+}
+
+function _startsWith($haystack, $needle){
   return !strncmp($haystack, $needle, strlen($needle));
 }
 
