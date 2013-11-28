@@ -363,13 +363,20 @@ function _caldav_events_get_stored_events($event_name) {
 //-------------------------------------------------------------------------
 
 /**
+ * Return this's module name
+ */
+function _name() {
+  return 'caldav_events';
+}
+
+/**
  * Return this's module name appended by an underscore.
  *
  * Use it to form module's keys in forms or variables.
  *
  */
 function _() {
-  return 'caldav_events_';
+  return _name().'_';
 }
 
 function _startsWith($haystack, $needle){
