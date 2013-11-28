@@ -249,7 +249,7 @@ function caldav_events_api_theme_event_node($event_name, $status, $event, &$node
 
 function caldav_events_cron() {
   $queue = DrupalQueue::get('caldav_events_queue_1');
-  $queue->createItem("miau miau");
+  $queue->createItem('');
 }
 
 function caldav_events_cron_queue_info() {
