@@ -215,7 +215,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   }
 
   $node->language = variable_get('language_default', 'und');
-  caldav_events_api_theme_event_node($event_name, $status, $event, $node);
+  _caldav_events_api_theme_event_node($event_name, $status, $event, $node);
   if (! @ $node->type) {
     $node->type = 'page';
   }
@@ -237,7 +237,6 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   return $node->nid;
 }
 
-function caldav_events_api_theme_event_node($event_name, $status, $event, &$node) {
 function caldav_events_mail($key, &$message, $params) {
   switch($key) {
   case 'event':
@@ -266,6 +265,8 @@ function caldav_events_mail($key, &$message, $params) {
     $message['send'] = FALSE;
   }
 }
+
+function _caldav_events_api_theme_event_node($event_name, $status, $event, &$node) {
   switch($status) {
   case 'new':
     $prefix_title = '';
