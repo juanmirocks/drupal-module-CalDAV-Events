@@ -66,6 +66,8 @@ function template_preprocess_caldav_events_list(&$variables) {
 }
 
 function caldav_events_block_info() {
+  $blocks = array();
+
   $event_name = variable_get(_().'event_name');
   if ($event_name) {
     $blocks['list_'.strtolower($event_name)] =
@@ -73,8 +75,8 @@ function caldav_events_block_info() {
             'info' => t('List of events: '.$event_name),
             'cache' => DRUPAL_CACHE_PER_ROLE,
             );
-    return $blocks;
   }
+  return $blocks;
 }
 
 function caldav_events_block_view($delta = '') {
