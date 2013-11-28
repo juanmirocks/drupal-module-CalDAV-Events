@@ -6,7 +6,7 @@
  * Naming Conventions:
  *   * Only lowercase and underscore
  *   * Drupral hooks are named `caldav_events_hookname`
- *   * Private functions are prefixed preferably with '_caldav_events' or just with '_' for utility functions
+ *   * Private functions are prefixed with '_'
  *   * Public functions (available to other modules) are named `caldav_events_api_functionname`
  *
  */
