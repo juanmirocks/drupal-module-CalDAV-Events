@@ -181,6 +181,15 @@ function caldav_events_form($form, &$form_state) {
                 '#size' => 16,
                 '#description' => t('Search in calendar events until this time'),
                 '#required' => true),
+
+          _().'event_node_author' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Event author'),
+                '#default_value' => variable_get(_().'event_node_author', 'admin'),
+                '#size' => 16,
+                '#description' => t('Author of automatically-created event pages'),
+                '#required' => false),
           );
 
   return system_settings_form($form);
