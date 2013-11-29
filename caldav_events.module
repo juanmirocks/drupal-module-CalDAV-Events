@@ -293,6 +293,13 @@ function caldav_events_cron() {
   $queue->createItem('');
 }
 
+/**
+ * Notify cron quees to run.
+ *
+ * Cron quees are cron jobts that can take a long time or fail like server requests.
+ * @see https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_cron_queue_info/7
+ *
+ */
 function caldav_events_cron_queue_info() {
   $queues['caldav_events_queue_1'] =
     array(
