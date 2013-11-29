@@ -190,6 +190,15 @@ function caldav_events_form($form, &$form_state) {
                 '#size' => 16,
                 '#description' => t('Author of automatically-created event pages'),
                 '#required' => false),
+
+          _().'event_email_to' =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Email to'),
+                '#default_value' => variable_get(_().'event_email_to'),
+                '#size' => 16,
+                '#description' => t('Email address to send events to. If left empty, no email is sent'),
+                '#required' => false),
           );
 
   return system_settings_form($form);
@@ -250,7 +259,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   drupal_form_submit($form_id, $form_state, $node);
   //node_save($node);
 
-  if (@$node->nid) {
+  if (@$node->nid && $to = variable_get(_().'event_email_to')) {
     $params =
       array("nid" => $node->nid,
             "event_name" => $event_name,
@@ -258,7 +267,8 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
             "event" => $event
             );
 
-    drupal_mail(_name(), 'event', 'jmcejuela@gmail.com', language_default(), $params);
+    $message = drupal_mail(_name(), 'event', $to, language_default(), $params);
+    watchdog(_name(), "Email event to '$to', result: ".$message['result']);
   }
 
   return $node->nid;
