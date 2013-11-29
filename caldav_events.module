@@ -221,6 +221,8 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   }
 
   node_object_prepare($node);
+  $node->name = 'admin'; //TODO make it configurable
+  node_submit($node);
   node_save($node);
 
   if (@$node->nid) {
@@ -334,7 +336,7 @@ function _caldav_events_read_servers($item) {
         $existing_nid = @ $e['keep']['nid'];
 
         $nid = _caldav_events_create_or_update_event_node($existing_nid, $event_name, $status, $event);
-        if ($nid && $status !== 'deleted') {
+        if ($nid && $status === 'new') {
           $updated_events[$key]['keep']['nid'] = $nid;
         }
       }
