@@ -101,7 +101,8 @@ function _read_events_from_server($params) {
     $updated_events[$item['href']] = array('etag' => $item['etag'], 'icalendar' => $icalendar_text);
   }
 
-  uasort($updated_events, '_sort_events');
+  //Suppress possible errors because PHP bug: http://stackoverflow.com/questions/3235387/usort-array-was-modified-by-the-user-comparison-function
+  @uasort($updated_events, '_sort_events');
 
   return $updated_events;
 }
