@@ -11,7 +11,8 @@ class VEvent {
     $this->icalendar = new iCalendar(array('icalendar' => $icalendar_text));
 
     $aux = $this->icalendar->GetComponents('VEVENT');
-    assert(sizeof($aux) == 1, "I expect only one VEVENT for this iCalendar");
+    //Assert with opt string added in >= PHP 5.4.8 "I expect only one VEVENT for this iCalendar");
+    assert(sizeof($aux) == 1);
     $this->vevent = $aux[0];
   }
 
