@@ -114,7 +114,7 @@ function caldav_events_menu() {
   $ret = array();
   $ret['admin/config/content/caldav_events'] =
     array(
-          'title' => 'CalDav Events',
+          'title' => 'CalDAV Events Configuration',
           'page callback' => 'drupal_get_form',
           'page arguments' => array('caldav_events_form'),
           'access arguments' => array('access administration pages'),
