@@ -181,6 +181,15 @@ function caldav_events_form($form, &$form_state) {
                 '#description' => t('Search in calendar events until this time'),
                 '#required' => true),
 
+          _caldav_events_('event_node_type') =>
+          array(
+                '#type' => 'textfield',
+                '#title' => t('Event node type'),
+                '#default_value' => variable_get(_caldav_events_('event_node_type'), 'page'),
+                '#size' => 16,
+                '#description' => t('Node type (machine name) of node event to create'),
+                '#required' => false),
+
           _caldav_events_('event_node_author') =>
           array(
                 '#type' => 'textfield',
@@ -233,9 +242,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
 
   $node->language = variable_get('language_default', 'und');
   _caldav_events_api_theme_event_node($event_name, $status, $event, $node);
-  if (! @ $node->type) {
-    $node->type = 'page';
-  }
+  $node->type = variable_get(_caldav_events_('event_node_type'), 'page');
 
   node_object_prepare($node);
   $node->name = variable_get(_caldav_events_('event_node_author'), 'admin');
