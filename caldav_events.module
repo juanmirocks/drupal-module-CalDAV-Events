@@ -230,9 +230,25 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   }
 
   node_object_prepare($node);
-  $node->name = 'admin'; //TODO make it configurable
-  node_submit($node);
-  node_save($node);
+  $node->name = variable_get(_().'event_node_author', 'admin');
+  if ($account = user_load_by_name($node->name)) {
+    $node->uid = $account->uid;
+    $GLOBALS['user'] = $account; //some other modules may want to read this so force it
+  }
+
+  $form_id = "{$node->type}_node_form";
+  $form_state = array();
+  $form_state['values']['op'] = t('Save');
+  /* If not set, those values of node's are used */
+  //$form_state['values']['title'] =;
+  //$form_state['values']['name'] =;
+  //...
+  $form_state['node'] = $node;
+
+  /* Use instead of node_save to fire up form hooks for which other modules listen to, like the
+     twitter_post module */
+  drupal_form_submit($form_id, $form_state, $node);
+  //node_save($node);
 
   if (@$node->nid) {
     $params =
