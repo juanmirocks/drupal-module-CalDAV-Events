@@ -111,21 +111,22 @@ function _sort_events($a, $b) {
   return ($a->start() < $b->start());
 }
 
-function _check_changes($olds, $news) {
+function _check_changes($olds, &$news) {
   $same_events = array();
   $modified_events = array();
   $new_events = array();
   $deleted_events = array();
 
   foreach ($news as $new_key => $new) {
-    $got = @ $olds[$new_key];
+    $exists_previous = @ $olds[$new_key];
 
-    if ($got) {
-      if (@ $got['keep']) {
-        $new['keep'] = $got['keep'];
+    if ($exists_previous) {
+      if (@ $exists_previous['keep']) {
+        $new['keep'] = $exists_previous['keep'];
+        $news[$new_key] = $new;
       }
 
-      if ($got['etag'] == $new['etag'])
+      if ($exists_previous['etag'] == $new['etag'])
         $same_events[$new_key] = $new;
       else
         $modified_events[$new_key] = $new;
