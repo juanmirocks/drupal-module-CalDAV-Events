@@ -111,8 +111,8 @@ function caldav_events_block_view($delta = '') {
 }
 
 function caldav_events_menu() {
-  $items = array();
-  $items['admin/config/content/caldav_events'] =
+  $ret = array();
+  $ret['admin/config/content/caldav_events'] =
     array(
           'title' => 'CalDav Events',
           'page callback' => 'drupal_get_form',
@@ -121,7 +121,7 @@ function caldav_events_menu() {
           'type' => MENU_NORMAL_ITEM,
           );
 
-  return $items;
+  return $ret;
 }
 
 function caldav_events_form($form, &$form_state) {
