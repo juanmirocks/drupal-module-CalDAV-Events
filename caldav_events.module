@@ -25,9 +25,8 @@ module_load_include('php', 'caldav_events', 'inc/connect');
  */
 function caldav_events_help($path, $arg) {
   switch ($path) {
-  case "admin/help#caldav_events":
-    return '<p>' . t("Write an email (with proper subject) to: juanmi@jmcejuela.com") . '</p>';
-    break;
+  case 'admin/help#caldav_events':
+    return '<p>'.t("Write an email (with proper subject) to: juanmi@jmcejuela.com").'</p>';
   }
 }
 
