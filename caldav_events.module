@@ -262,6 +262,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
 
   /* Use instead of node_save to fire up form hooks for which other modules listen to, like the
      twitter_post module */
+  module_load_include('inc', 'node', 'node.pages');
   drupal_form_submit($form_id, $form_state, $node);
   //node_save($node);
 
