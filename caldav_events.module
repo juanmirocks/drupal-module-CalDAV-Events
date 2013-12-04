@@ -151,7 +151,7 @@ function caldav_events_form($form, &$form_state) {
                 //'#default_value' => variable_get(_caldav_events_('server_password')), //do
                 //not show the password for now
                 '#size' => 32,
-                '#description' => t('Password to connec to the CalDAV server'),
+                '#description' => t('Password to connect to the CalDAV server'),
                 '#required' => true),
 
           _caldav_events_('event_name') =>
