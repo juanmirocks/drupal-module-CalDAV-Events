@@ -146,7 +146,7 @@ function caldav_events_form($form, &$form_state) {
 
           _caldav_events_('server_password') =>
           array(
-                '#type' => 'textfield',
+                '#type' => 'password',
                 '#title' => t('Password'),
                 //'#default_value' => variable_get(_caldav_events_('server_password')), //do
                 //not show the password for now
