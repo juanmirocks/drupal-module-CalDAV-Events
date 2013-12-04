@@ -291,7 +291,7 @@ function caldav_events_mail($key, &$message, $params) {
 
     $prefix = _prefix_title($params['status']);
     $message['subject'] = t($prefix.$event->start()->format('M d').' - '.$event->summary());
-    $message['body'][] = implode('<br/>', array(l('==> Link', $nodeurl), '<p>'.$event->description().'</p>'));
+    $message['body'][] = implode('<br/>', array(l('Link', $nodeurl), '<p>'.$event->description().'</p>'));
 
     break;
   default:
