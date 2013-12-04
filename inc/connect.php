@@ -110,7 +110,7 @@ function _read_events_from_server($params) {
 function _sort_events($a, $b) {
   $a = new VEvent($a['icalendar']);
   $b = new VEvent($b['icalendar']);
-  return ($a->start() < $b->start());
+  return ($a->start() > $b->start());
 }
 
 function _check_changes($olds, &$news) {
