@@ -35,12 +35,7 @@ function caldav_events_theme() {
                'caldav_events_single' =>
                array('template' => 'caldav-events-single',
                      'pattern' => 'caldav_events_single__',
-                     'variables' => array('summary' => '', 'description' => '', 'location' => '', 'start_date' => NULL, 'end_date' => NULL, 'attendees' => '')),
-
-               'caldav_events_page' =>
-               array('template' => 'caldav-events-page',
-                     'pattern' => 'caldav_events_page__',
-                     'variables' => array('summary' => '', 'description' => '', 'location' => '', 'start_date' => NULL, 'end_date' => NULL, 'attendees' => '')),
+                     'variables' => _caldav_events_variables_init()),
 
                'caldav_events_list' =>
                array('template' => 'caldav-events-list',
@@ -48,15 +43,64 @@ function caldav_events_theme() {
                      'variables' => array('items' => array())));
 }
 
+function _caldav_events_variables_init($event = NULL) {
+  if ($event) {
+    $vars = array('summary' => $event->summary(),
+                  'description' => $event->description(),
+                  'location' => $event->location(),
+                  'start_date' => $event->start(),
+                  'end_date' => $event->end(),
+                  'attendees' => $event->attendees(),
+                  'status' => 'same');
+  } else {
+    $vars = array('summary' => '',
+                  'description' => '',
+                  'location' => '',
+                  'start_date' => NULL,
+                  'end_date' => NULL,
+                  'attendees' => '',
+                  'status' => 'same');
+  }
+
+  return $vars;
+}
+
+function _caldav_events_variables_preprocess(&$vars) {
+  $vars['unprefixed_summary'] = _caldav_events_unprefixed_summary($vars['summary']);
+  $vars['status_legend']      = _caldav_events_status_legend($vars['status']);
+  $vars['start_date_Md']      = $vars['start']->format('M d');
+  $vars['start_date_hour24']  = $vars['start']->format('H:i');
+
+  return $vars;
+}
+
+function _caldav_events_unprefixed_summary($summary) {
+  if (preg_match('/^'.$event_name.'\W*(\w.*)$/i', $summary, $matches)) {
+    return $matches[1];
+  } else {
+    return = $summary;
+  }
+}
+
+function _caldav_events_status_legend($status) {
+  switch($status) {
+  case 'same':
+  case 'new':
+    return '';
+  case 'modified':
+    return '(updated) ';
+  case 'deleted':
+    return '(CANCELLED) ';
+  default:
+    watchdog(_caldav_events(), "_prefix_title called with unexpected status: $status");
+    return '';
+  }
+}
+
 function template_preprocess_caldav_events_single(&$variables) {
   $event_name = variable_get(_caldav_events_('event_name'));
   $variables['theme_hook_suggestions'] = array("caldav_events_single_$event_name");
-  $summary = $variables['summary'];
-  if (preg_match('/^'.$event_name.'\W*(\w.*)$/i', $summary, $matches)) {
-    $variables['unprefixed_summary'] = $matches[1];
-  } else {
-    $variables['unprefixed_summary'] = $summary;
-  }
+  _caldav_events_variables_preprocess($variables);
 }
 
 function template_preprocess_caldav_events_list(&$variables) {
@@ -92,12 +136,7 @@ function caldav_events_block_view($delta = '') {
           $event = new VEvent($e['icalendar']);
           $items[] =
             theme(array("caldav_events_single__$event_name", 'caldav_events_single'),
-                  array('summary' => $event->summary(),
-                        'description' => $event->description(),
-                        'location' => $event->location(),
-                        'start_date' => $event->start(),
-                        'end_date' => $event->end(),
-                        'attendees' => $event->attendees()));
+                  _caldav_events_variables_init($event));
         }
 
         $block['content'] =
@@ -148,8 +187,8 @@ function caldav_events_form($form, &$form_state) {
           array(
                 '#type' => 'password',
                 '#title' => t('Password'),
-                //'#default_value' => variable_get(_caldav_events_('server_password')), //do
-                //not show the password for now
+                //Force to write in password again when making changes
+                //'#default_value' => variable_get(_caldav_events_('server_password')),
                 '#size' => 32,
                 '#description' => t('Password to connect to the CalDAV server'),
                 '#required' => true),
@@ -241,9 +280,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   }
 
   $node->language = variable_get('language_default', 'und');
-  _caldav_events_api_theme_event_node($event_name, $status, $event, $node);
   $node->type = variable_get(_caldav_events_('event_node_type'), 'page');
-
   node_object_prepare($node);
   $node->name = variable_get(_caldav_events_('event_node_author'), 'admin');
   if ($account = user_load_by_name($node->name)) {
@@ -251,14 +288,16 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
     $GLOBALS['user'] = $account; //some other modules may want to read this so force it
   }
 
+  $vars = _caldav_events_variables_preprocess(_caldav_events_variables_init($event));
+  _caldav_events_format_event_node($node, $vars);
+
   $form_id = "{$node->type}_node_form";
   $form_state = array();
+  $form_state['node'] = $node;
   $form_state['values']['op'] = t('Save');
   /* If not set, those values of node's are used */
   //$form_state['values']['title'] =;
-  //$form_state['values']['name'] =;
   //...
-  $form_state['node'] = $node;
 
   /* Use instead of node_save to fire up form hooks for which other modules listen to, like the
      twitter_post module */
@@ -269,10 +308,7 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   if (@$node->nid && $to = variable_get(_caldav_events_('event_email_to'))) {
     $params =
       array("nid" => $node->nid,
-            "event_name" => $event_name,
-            "status" => $status,
-            "event" => $event
-            );
+            "variables" => $vars);
 
     $message = drupal_mail(_caldav_events(), 'event', $to, language_default(), $params);
     watchdog(_caldav_events(), "Email event to '$to', result: ".$message['result']);
@@ -281,17 +317,28 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
   return $node->nid;
 }
 
+function _caldav_events_format_event_node(&$node, $vars) {
+  $node->title = t("!status_legend"."!start_date_Md - !summary", $vars);
+  $node->body[$node->language][0]['value']   = $("!description", $vars);
+  $node->body[$node->language][0]['summary'] = text_summary($vars['description']);
+  //TODO $node->time[$node->language][0]['value']   = start_date_hour24
+}
+
+
+/**
+ * Implementation of hook_mail.
+ *
+ * Format the event email.
+ */
 function caldav_events_mail($key, &$message, $params) {
   switch($key) {
   case 'event':
-    $event = $params['event'];
     $nodeurl = url('node/'. $params['nid']);
+    $vars = $params['variables'];
 
     $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
-
-    $prefix = _prefix_title($params['status']);
-    $message['subject'] = t($prefix.$event->start()->format('M d').' - '.$event->summary());
-    $message['body'][] = implode('<br/>', array(l('Link', $nodeurl), '<p>'.$event->description().'</p>'));
+    $message['subject'] = t("!status_legend"."!start_date_Md - !summary", $vars);
+    $message['body'][] = implode('<br/>', array(l('Link', $nodeurl), '<p>'.$vars['description'].'</p>'));
 
     break;
   default:
@@ -299,31 +346,9 @@ function caldav_events_mail($key, &$message, $params) {
   }
 }
 
-function _caldav_events_api_theme_event_node($event_name, $status, $event, &$node) {
-  $prefix = _prefix_title($status);
-
-  $node->title = $prefix.$event->start()->format('M d').' - '.$event->summary();
-  //
-  $node->body[$node->language][0]['value']   = $event->description();
-  $node->body[$node->language][0]['summary'] = text_summary($event->description());
-  //$node->body[$node->language][0]['format']  = 'php_code';
-  //
-  //$node->time[$node->language][0]['value']   = $event->start()->format('H:m');
-}
-
-function _prefix_title($status) {
-  switch($status) {
-  case 'new':
-    return '';
-  case 'modified':
-    return '(updated) ';
-  case 'deleted':
-    return '(CANCELLED) ';
-  default:
-    watchdog(_caldav_events(), "_prefix_title called with unexpected status: $status");
-    return '';
-  }
-}
+//-------------------------------------------------------------------------
+// Cron & Calendar Management
+//-------------------------------------------------------------------------
 
 function caldav_events_cron() {
   $queue = DrupalQueue::get('caldav_events_queue_1');
