@@ -65,20 +65,20 @@ function _caldav_events_variables_init($event = NULL) {
   return $vars;
 }
 
-function _caldav_events_variables_preprocess(&$vars) {
-  $vars['unprefixed_summary'] = _caldav_events_unprefixed_summary($vars['summary']);
+function _caldav_events_variables_preprocess($event_name, &$vars) {
+  $vars['unprefixed_summary'] = _caldav_events_unprefixed_summary($event_name, $vars['summary']);
   $vars['status_legend']      = _caldav_events_status_legend($vars['status']);
-  $vars['start_date_Md']      = $vars['start']->format('M d');
-  $vars['start_date_hour24']  = $vars['start']->format('H:i');
+  $vars['start_date_Md']      = $vars['start_date']->format('M d');
+  $vars['start_date_hour24']  = $vars['start_date']->format('H:i');
 
   return $vars;
 }
 
-function _caldav_events_unprefixed_summary($summary) {
+function _caldav_events_unprefixed_summary($event_name, $summary) {
   if (preg_match('/^'.$event_name.'\W*(\w.*)$/i', $summary, $matches)) {
     return $matches[1];
   } else {
-    return = $summary;
+    return $summary;
   }
 }
 
@@ -97,10 +97,20 @@ function _caldav_events_status_legend($status) {
   }
 }
 
+function _caldav_events_variables_ui($vars) {
+  $ui_vars = array();
+  foreach($vars as $k => $v) {
+    if (is_string($v)) {
+      $ui_vars["!$k"] = check_plain($v);
+    }
+  }
+  return $ui_vars;
+}
+
 function template_preprocess_caldav_events_single(&$variables) {
   $event_name = variable_get(_caldav_events_('event_name'));
   $variables['theme_hook_suggestions'] = array("caldav_events_single_$event_name");
-  _caldav_events_variables_preprocess($variables);
+  _caldav_events_variables_preprocess($event_name, $variables);
 }
 
 function template_preprocess_caldav_events_list(&$variables) {
@@ -288,7 +298,8 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
     $GLOBALS['user'] = $account; //some other modules may want to read this so force it
   }
 
-  $vars = _caldav_events_variables_preprocess(_caldav_events_variables_init($event));
+  $vars = _caldav_events_variables_init($event);
+  $vars = _caldav_events_variables_ui(_caldav_events_variables_preprocess($event_name, $vars));
   _caldav_events_format_event_node($node, $vars);
 
   $form_id = "{$node->type}_node_form";
@@ -319,11 +330,10 @@ function _caldav_events_create_or_update_event_node($nid, $event_name, $status, 
 
 function _caldav_events_format_event_node(&$node, $vars) {
   $node->title = t("!status_legend"."!start_date_Md - !summary", $vars);
-  $node->body[$node->language][0]['value']   = $("!description", $vars);
-  $node->body[$node->language][0]['summary'] = text_summary($vars['description']);
+  $node->body[$node->language][0]['value']   = t("!description", $vars);
+  $node->body[$node->language][0]['summary'] = text_summary($vars['!description']);
   //TODO $node->time[$node->language][0]['value']   = start_date_hour24
 }
-
 
 /**
  * Implementation of hook_mail.
@@ -338,7 +348,7 @@ function caldav_events_mail($key, &$message, $params) {
 
     $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
     $message['subject'] = t("!status_legend"."!start_date_Md - !summary", $vars);
-    $message['body'][] = implode('<br/>', array(l('Link', $nodeurl), '<p>'.$vars['description'].'</p>'));
+    $message['body'][] = implode('<br/>', array(l('Link', $nodeurl), '<p>'.$vars['!description'].'</p>'));
 
     break;
   default:
