@@ -4,10 +4,19 @@
  * CalDav Events, drupal module
  *
  * Naming Conventions:
- *   * Only lowercase and underscore
- *   * Drupral hooks are named `caldav_events_hookname`
- *   * Private functions are prefixed with '_caldav_events_'
- *   * Public functions (available to other modules) are named `caldav_events_api_functionname`
+ *
+ * * Only lowercase and underscore
+ * * Drupral hooks are named `caldav_events_hookname`
+ * * Private functions are prefixed with '_caldav_events_'
+ * * Public functions (available to other modules) are named `caldav_events_api_functionname`
+ *
+ *
+ * Developing:
+ *
+ * * [Activate, show all error messages](https://drupal.org/node/1056468)
+ * * Easiest functions to debug:
+ * *  * `watchdog(_caldav_events(), 'error message...');` //prints to standard output
+ * *  * `debug('error_message...', _caldav_events(), true);` //show message on page
  *
  */
 
