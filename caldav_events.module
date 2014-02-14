@@ -421,28 +421,37 @@ function _caldav_events_read_servers($item) {
              'event_end' => variable_get(_caldav_events_('event_end'))
              );
 
-    $previous_events = _caldav_events_get_stored_events($event_name);
-    $updated_events = _read_events_from_server($params);
-
-    $meta_events = _check_changes($previous_events, $updated_events);
-
-    $do = function($status) use ($meta_events, &$updated_events, $event_name) {
-      foreach ($meta_events[$status] as $key => $e) {
-        $event = new VEvent($e['icalendar']);
-        $existing_nid = @ $e['keep']['nid'];
-
-        $nid = _caldav_events_create_or_update_event_node($existing_nid, $event_name, $status, $event);
-        if ($nid && $status === 'new') {
-          $updated_events[$key]['keep']['nid'] = $nid;
-        }
+    try {
+      if (!_test_connection($params)) {
+        throw new Exception('There is no connection');
       }
-    };
 
-    $do('new');
-    $do('modified');
-    $do('deleted');
+      $previous_events = _caldav_events_get_stored_events($event_name);
+      $updated_events = _read_events_from_server($params);
+      $meta_events = _check_changes($previous_events, $updated_events);
 
-    _caldav_events_set_stored_events($event_name, $updated_events);
+      $do = function($status) use ($meta_events, &$updated_events, $event_name) {
+        foreach ($meta_events[$status] as $key => $e) {
+          $event = new VEvent($e['icalendar']);
+          $existing_nid = @ $e['keep']['nid'];
+
+          $nid = _caldav_events_create_or_update_event_node($existing_nid, $event_name, $status, $event);
+          if ($nid && $status === 'new') {
+            $updated_events[$key]['keep']['nid'] = $nid;
+          }
+        }
+      };
+
+      $do('new');
+      $do('modified');
+      $do('deleted');
+
+      _caldav_events_set_stored_events($event_name, $updated_events);
+
+    } catch (Exception $e) {
+      debug($e->getMessage(), 'caldav_events', true);
+      return;
+    }
   }
 }
 
