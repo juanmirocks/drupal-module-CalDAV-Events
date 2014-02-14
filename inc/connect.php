@@ -127,9 +127,19 @@ function _sort_events_LIFO($a, $b) {
   $a = new VEvent($a['icalendar']);
   $b = new VEvent($b['icalendar']);
   if ($a->start() < $b->start()) {
-    return 1;
+    return +1;
   } else {
     return -1;
+  }
+}
+
+function _sort_events_FIFO($a, $b) {
+  $a = new VEvent($a['icalendar']);
+  $b = new VEvent($b['icalendar']);
+  if ($a->start() < $b->start()) {
+    return -1;
+  } else {
+    return +1;
   }
 }
 
