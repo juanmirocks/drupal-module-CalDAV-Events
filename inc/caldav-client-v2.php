@@ -868,6 +868,10 @@ EOXML;
     $this->SetContentType("text/xml");
     $this->DoRequest( $this->calendar_url );
 
+    if (!isset($this->xmlnodes)) {
+      throw new Exception('Could not get any result. Most probably the connection is broken');
+    }
+
     $report = array();
     foreach( $this->xmlnodes as $k => $v ) {
       switch( $v['tag'] ) {
