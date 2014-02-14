@@ -20,6 +20,7 @@
  *
  */
 
+module_load_include('php', 'caldav_events', 'inc/utils');
 module_load_include('php', 'caldav_events', 'inc/connect');
 
 /**
@@ -142,7 +143,7 @@ function caldav_events_block_info() {
 }
 
 function caldav_events_block_view($delta = '') {
-  if (_caldav_events_startsWith($delta, 'list_')) {
+  if (_startsWith($delta, 'list_')) {
     $event_name = variable_get(_caldav_events_('event_name'));
     $block['subject'] = t($event_name.' events');
     if (user_access('access content')) {
@@ -469,10 +470,6 @@ function _caldav_events() {
  */
 function _caldav_events_($sub = '') {
   return _caldav_events().'_'.$sub;
-}
-
-function _caldav_events_startsWith($haystack, $needle){
-  return !strncmp($haystack, $needle, strlen($needle));
 }
 
 /* ?> Omitted closing tag, as recommended by: https://drupal.org/node/1074362 */
