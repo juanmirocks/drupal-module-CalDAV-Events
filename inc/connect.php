@@ -118,15 +118,19 @@ function _read_events_from_server($params) {
   }
 
   //Suppress possible errors because PHP bug: http://stackoverflow.com/questions/3235387/usort-array-was-modified-by-the-user-comparison-function
-  @uasort($updated_events, '_sort_events');
+  @uasort($updated_events, '_sort_events_LIFO');
 
   return $updated_events;
 }
 
-function _sort_events($a, $b) {
+function _sort_events_LIFO($a, $b) {
   $a = new VEvent($a['icalendar']);
   $b = new VEvent($b['icalendar']);
-  return ($a->start() < $b->start());
+  if ($a->start() < $b->start()) {
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 function _check_status_changes($olds, &$news) {
