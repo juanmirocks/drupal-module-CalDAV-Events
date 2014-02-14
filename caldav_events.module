@@ -285,13 +285,25 @@ function caldav_events_form_validate($form, &$form_state) {
   $event_name = $v[_caldav_events_('event_name')];
   if ($event_name != '' && check_plain($event_name) !== $event_name) {
     form_set_error(_caldav_events_('event_name'), t('The event name cannot contain special code'));
-    fail();
+    fail(); return;
   }
 
-  if ($v[_caldav_events_('server_url')] && $v[_caldav_events_('server_username')] && $v[_caldav_events_('server_password')] && $v[_caldav_events_('event_name')] && $v[_caldav_events_('event_start')] && $v[_caldav_events_('event_end')]) {
-    variable_set(_caldav_events_('server_data_given'), true);
+  $url = $v[_caldav_events_('server_url')];
+  $username = $v[_caldav_events_('server_username')];
+  $password =  $v[_caldav_events_('server_password')];
+
+  if ($url && $username && $password) {
+    if (!_test_connection(array('url' => $url, 'username' => $username, 'password' => $password))) {
+      form_set_error(_caldav_events_('server_password'), t('I could not get a connection. Are the url/username/password correct?'));
+      fail(); return;
+    } else if (!($v[_caldav_events_('event_name')] && $v[_caldav_events_('event_start')] && $v[_caldav_events_('event_end')])) {
+      fail(); return;
+    } else {
+      variable_set(_caldav_events_('server_data_given'), true);
+      return;
+    }
   } else {
-    fail();
+    fail(); return;
   }
 }
 

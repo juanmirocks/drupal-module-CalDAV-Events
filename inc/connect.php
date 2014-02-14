@@ -1,5 +1,6 @@
 <?php
 
+require_once('utils.php');
 require_once('caldav-client-v2.php');
 require_once('iCalendar.php');
 
@@ -80,6 +81,21 @@ class VEvent {
     }
     return $ret;
   }
+}
+
+/**
+ * Test if an authorized connection can be made to the calendar.
+ *
+ * @param params
+ *   array with properties {url, username, password}
+ *
+ * @return true/false
+ *
+ */
+function _test_connection($params) {
+  $client = new CalDAVClient($params['url'], $params['username'], $params['password']);
+  $response = $client->DoHEADRequest(null);
+  return(_startsWith($response, 'HTTP/1.1 200 OK'));
 }
 
 function _read_events_from_server($params) {
