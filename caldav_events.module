@@ -429,7 +429,7 @@ function _caldav_events_read_servers($item) {
       $previous_events = _caldav_events_get_stored_events($event_name);
       $updated_events = _read_events_from_server($params);
 
-      $meta_events = _check_changes($previous_events, $updated_events);
+      $meta_events = _check_status_changes($previous_events, $updated_events);
 
       $do = function($status) use ($meta_events, &$updated_events, $event_name) {
         foreach ($meta_events[$status] as $key => $e) {

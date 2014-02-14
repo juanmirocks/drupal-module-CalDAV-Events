@@ -129,7 +129,7 @@ function _sort_events($a, $b) {
   return ($a->start() < $b->start());
 }
 
-function _check_changes($olds, &$news) {
+function _check_status_changes($olds, &$news) {
   $same_events = array();
   $modified_events = array();
   $new_events = array();
