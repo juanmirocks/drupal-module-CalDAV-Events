@@ -270,6 +270,10 @@ function caldav_events_form($form, &$form_state) {
   return system_settings_form($form);
 }
 
+/**
+ * Function to be applied after form submission for validation. (Note, do not confuse this with hook_validate)
+ *
+ */
 function caldav_events_form_validate($form, &$form_state) {
   function fail() {
     variable_set(_caldav_events_('server_data_given'), false);
