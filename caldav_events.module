@@ -449,7 +449,7 @@ function _caldav_events_read_servers($item) {
       _caldav_events_set_stored_events($event_name, $updated_events);
 
     } catch (Exception $e) {
-      debug($e->getMessage(), 'caldav_events', true);
+      watchdog(_caldav_events(), 'Error while reading from calendar server. Exception message: ' . $e->getMessage());
       return;
     }
   }
