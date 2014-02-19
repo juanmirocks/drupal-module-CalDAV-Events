@@ -4,6 +4,11 @@ require_once('utils.php');
 require_once('caldav-client-v2.php');
 require_once('iCalendar.php');
 
+/**
+ * Event object from an iCalendar.
+ *
+ * Named after the VEVENT component in the iCalendar format.
+ */
 class VEvent {
   private $icalendar;
   private $vevent;
@@ -98,6 +103,16 @@ function _test_connection($params) {
   return(_startsWith($response, 'HTTP/1.1 200 OK'));
 }
 
+/**
+ * Return array of events that match the search parameters.
+ *
+ * The returned events are sorted by start date desc, that is, the latest start date comes first.
+ *
+ * @return
+ *  array keyed by the event's unique and unchangeable `href` with fields:
+ *    * `etag`: aka event's version hash
+ *    * `icalendar`: icalendar text representation of the event
+ */
 function _read_events_from_server($params) {
   $client = new CalDAVClient($params['url'], $params['username'], $params['password']);
 
@@ -114,6 +129,9 @@ function _read_events_from_server($params) {
   $updated_events = array();
   foreach ($results as $item) {
     $icalendar_text = $item['data'];
+    //Note, the href identifies the event uniquely and this does not change. The etag identifies the
+    //event's version and so can change. Therefore: 2 events with same href but different etags
+    //represent different versions of the same event.
     $updated_events[$item['href']] = array('etag' => $item['etag'], 'icalendar' => $icalendar_text);
   }
 
