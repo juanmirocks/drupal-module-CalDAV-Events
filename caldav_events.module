@@ -293,8 +293,9 @@ function caldav_events_form_validate($form, &$form_state) {
   $password =  $v[_caldav_events_('server_password')];
 
   if ($url && $username && $password) {
-    if (!_test_connection(array('url' => $url, 'username' => $username, 'password' => $password))) {
-      form_set_error(_caldav_events_('server_password'), t('I could not get a connection. Are the url/username/password correct?'));
+    $test = _test_connection(array('url' => $url, 'username' => $username, 'password' => $password));
+    if (!$test['connected']) {
+      form_set_error(_caldav_events_('server_password'), t('I could not get a connection. Are the url/username/password correct? Response:'."\n".$test['response']));
       fail(); return;
     } else if (!($v[_caldav_events_('event_name')] && $v[_caldav_events_('event_start')] && $v[_caldav_events_('event_end')])) {
       fail(); return;
@@ -422,7 +423,8 @@ function _caldav_events_read_servers($item) {
              );
 
     try {
-      if (!_test_connection($params)) {
+      $test = _test_connection($params);
+      if (!$test['connected']) {
         throw new Exception('There is no connection');
       }
 
