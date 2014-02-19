@@ -94,13 +94,15 @@ class VEvent {
  * @param params
  *   array with properties {url, username, password}
  *
- * @return true/false
+ * @return array with properties:
+ *   * `connected`: connection was successfully establish true/false
+ *   * `response`: full HEAD response from the server.
  *
  */
 function _test_connection($params) {
   $client = new CalDAVClient($params['url'], $params['username'], $params['password']);
   $response = $client->DoHEADRequest(null);
-  return(_startsWith($response, 'HTTP/1.1 200 OK'));
+  return array('connected' => _startsWith($response, 'HTTP/1.1 200 OK'), 'response' => $response);
 }
 
 /**
