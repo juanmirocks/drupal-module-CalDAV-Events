@@ -430,12 +430,13 @@ function _caldav_events_read_servers($item) {
 
       $previous_events = _caldav_events_get_stored_events($event_name);
       $updated_events = _read_events_from_server($params);
+      $meta_events = _fill_events_status($previous_events, $updated_events);
 
-      $meta_events = _check_status_changes($previous_events, $updated_events);
+      foreach ($meta_events as $key => $e) {
+        $status = $e['status'];
+        if ($status !== 'same') {
+          $event = $e['vevent'];
 
-      $do = function($status) use ($meta_events, &$updated_events, $event_name) {
-        foreach ($meta_events[$status] as $key => $e) {
-          $event = new VEvent($e['icalendar']);
           $existing_nid = @ $e['keep']['nid'];
 
           $nid = _caldav_events_create_or_update_event_node($existing_nid, $event_name, $status, $event);
@@ -443,11 +444,7 @@ function _caldav_events_read_servers($item) {
             $updated_events[$key]['keep']['nid'] = $nid;
           }
         }
-      };
-
-      $do('new');
-      $do('modified');
-      $do('deleted');
+      }
 
       _caldav_events_set_stored_events($event_name, $updated_events);
 
@@ -463,6 +460,10 @@ function _caldav_events_events_local_path($event_name) {
 }
 
 function _caldav_events_set_stored_events($event_name, $events) {
+  foreach ($events as &$val) {
+    unset($val['vevent']);
+    unset($val['status']);
+  }
   file_put_contents(_caldav_events_events_local_path($event_name), serialize($events));
 }
 

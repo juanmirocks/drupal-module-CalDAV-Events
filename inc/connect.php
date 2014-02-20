@@ -134,7 +134,7 @@ function _read_events_from_server($params) {
     //Note, the href identifies the event uniquely and this does not change. The etag identifies the
     //event's version and so can change. Therefore: 2 events with same href but different etags
     //represent different versions of the same event.
-    $updated_events[$item['href']] = array('etag' => $item['etag'], 'icalendar' => $icalendar_text);
+    $updated_events[$item['href']] = array('etag' => $item['etag'], 'icalendar' => $icalendar_text, 'vevent' => new VEvent($icalendar_text));
   }
 
   //Suppress possible errors because PHP bug: http://stackoverflow.com/questions/3235387/usort-array-was-modified-by-the-user-comparison-function
@@ -144,8 +144,8 @@ function _read_events_from_server($params) {
 }
 
 function _sort_events_LIFO($a, $b) {
-  $a = new VEvent($a['icalendar']);
-  $b = new VEvent($b['icalendar']);
+  $a = $a['vevent'];
+  $b = $b['vevent'];
   if ($a->start() < $b->start()) {
     return +1;
   } else {
@@ -154,20 +154,16 @@ function _sort_events_LIFO($a, $b) {
 }
 
 function _sort_events_FIFO($a, $b) {
-  $a = new VEvent($a['icalendar']);
-  $b = new VEvent($b['icalendar']);
-  if ($a->start() < $b->start()) {
-    return -1;
-  } else {
-    return +1;
-  }
+  return -(_sort_events_LIFO($a, $b));
 }
 
-function _check_status_changes($olds, &$news) {
-  $same_events = array();
-  $modified_events = array();
-  $new_events = array();
-  $deleted_events = array();
+function _set_status(&$elem, $status) {
+  $elem['status'] = $status;
+  return $elem;
+}
+
+function _fill_events_status($olds, &$news) {
+  $ret = array();
 
   foreach ($news as $new_key => $new) {
     $exists_previous = @ $olds[$new_key];
@@ -178,24 +174,26 @@ function _check_status_changes($olds, &$news) {
         $news[$new_key] = $new;
       }
 
-      if ($exists_previous['etag'] == $new['etag'])
-        $same_events[$new_key] = $new;
-      else
-        $modified_events[$new_key] = $new;
+      if ($exists_previous['etag'] == $new['etag']) {
+        $ret[$new_key] = _set_status($new, 'same');
+      } else {
+        $ret[$new_key] = _set_status($new, 'modified');
+      }
     }
-    else
-      $new_events[$new_key] = $new;
+    else {
+      $ret[$new_key] = 'new';
+      $ret[$new_key] = _set_status($new, 'new');
+    }
   }
 
   foreach ($olds as $old_key => $old) {
     $got = @ $news[$old_key];
-    if (!$got)
-      $deleted_events[$old_key] = $old;
+    if (!$got) {
+      $ret[$old_key] = _set_status($old, 'deleted');
+    }
   }
 
-  return array(
-               'same' => $same_events,
-               'modified' => $modified_events,
-               'new' => $new_events,
-               'deleted' => $deleted_events);
+  @uasort($ret, '_sort_events_FIFO');
+
+  return $ret;
 }
