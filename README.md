@@ -6,7 +6,7 @@ Features:
 * Read events from a CalDAV calendar to:
   * Create nodes with the event's information
   * Announce the events via email
-  * Works well with other modules. For example, you can use the [Twitter Module](https://drupal.org/project/twitter)> to tweet events
+  * Works well with other modules. For example, you can use the [Twitter Module](https://drupal.org/project/twitter) to tweet events
 
 * Create weekly events into the calendar. For example, you can send weekly invitations to a list of users who should hold a presentation
 
