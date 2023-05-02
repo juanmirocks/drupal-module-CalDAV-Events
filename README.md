@@ -29,4 +29,4 @@ I wrote this module for my own use. If you need maintenance or want to extend th
 
 
 ## Development
-The main/entry code is the PHP module file [`caldav_events.module`][caldav_events.module].
+The main/entry code is the PHP module file [`caldav_events.module`](caldav_events.module).
