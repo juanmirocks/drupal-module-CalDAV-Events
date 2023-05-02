@@ -19,7 +19,7 @@ Go to the Module's configuration page. The configuration should be self-explanat
 
 
 ### Status & Testability
-This is a drupal sandbox project. However, the module has been used in production in a medium-size site since 2013.
+This module has been used in production in a medium-size site since 2013.
 
 In theory, every CalDAV server should work. Popular CalDAV servers are for instance [DAViCal](http://www.davical.org/) or [Google Calendar](https://support.google.com/calendar/?hl=en#topic=3417927). In practice, the module was tested with the following servers: DAViCal.
 
