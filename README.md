@@ -29,4 +29,4 @@ This module is for Drupal 7.
 
 
 ### Maintenance
-I wrote this module for my own needs. I can only maintain and extend the module if people show interest.
+I wrote this module for my own use. If you need maintenance or want to extend the module, contact me at: https://juanmi.rocks.
